@@ -112,7 +112,7 @@ EXCEPTION
           DBMS_OUTPUT.PUT_LINE('ERREUR:' || SQLERRM );
           
 END ajouter_reservations;
-\
+/
 
 
 
@@ -126,7 +126,7 @@ CREATE OR REPLACE PROCEDURE modifier_passengers (
        p_Nationality IN VARCHAR2 
 ) 
 IS 
-     v_count NUMBER
+     v_count NUMBER ;
      
 BEGIN 
      IF p_prenom IS NULL OR p_nom IS NULL OR p_Contact IS NULL THEN
@@ -170,7 +170,7 @@ EXCEPTION
              DBMS_OUTPUT.PUT_LINE('ERREUR:' || SQLERRM );
 
 END modifier_passengers ; 
-\
+/
 
 
 
