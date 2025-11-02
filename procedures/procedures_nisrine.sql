@@ -248,3 +248,35 @@ EXCEPTION
              
 END supprimer_passengers ; 
 /
+
+
+
+
+CREATE OR REPLACE PROCEDURE supprimer_reservations ( 
+       p_reservation_id IN NUMBER 
+)
+IS     
+     v_count NUMBER;
+BEGIN   
+     -- Vérifier si la réservation existe
+     SELECT COUNT(*) INTO v_count
+     FROM Reservations
+     WHERE reservation_id = p_reservation_id; 
+     
+     IF v_count = 0 THEN 
+         DBMS_OUTPUT.PUT_LINE('Erreur : ID de cette réservation n''existe pas.');
+     ELSE 
+         DELETE FROM Reservations 
+         WHERE reservation_id = p_reservation_id;
+         
+         COMMIT; 
+         DBMS_OUTPUT.PUT_LINE('Réservation supprimée avec succès.');
+     END IF; 
+     
+EXCEPTION
+     WHEN VALUE_ERROR THEN
+          DBMS_OUTPUT.PUT_LINE('Erreur : type de donnée invalide.');     
+     WHEN OTHERS THEN 
+          DBMS_OUTPUT.PUT_LINE('Erreur inattendue : ' || SQLERRM);
+END supprimer_reservations;
+/
