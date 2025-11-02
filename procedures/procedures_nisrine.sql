@@ -215,3 +215,36 @@ EXCEPTION
              DBMS_OUTPUT.PUT_LINE('ERREUR:' || SQLERRM );
 END modifier_reservations ; 
 /
+
+
+CREATE OR REPLACE PROCEDURE supprimer_passengers ( 
+       p_Passenger_id IN NUMBER 
+)
+
+IS     v_count NUMBER ; 
+BEGIN   
+     SELECT COUNT(*) INTO v_count
+     FROM  Passengers
+     WHERE Passenger_id = p_Passenger_id ; 
+     
+     
+     IF v_count = 0 THEN 
+        DBMS_OUTPUT.PUT_LINE('Erreur : ID de ce passager n existe pas.');
+     ELSE 
+        DELETE FROM passengers 
+        WHERE Passenger_id = p_Passenger_id ; 
+        
+        COMMIT; 
+        DBMS_OUTPUT.PUT_LINE('Passager supprimé avec succès.');
+     END IF ; 
+     
+EXCEPTION
+        WHEN NO_DATA_FOUND THEN 
+             DBMS_OUTPUT.PUT_LINE('ERREUR: ID PASSAGER N EXISTE PAS ');
+        WHEN VALUE_ERROR THEN
+             DBMS_OUTPUT.PUT_LINE('Erreur : type de donnée invalide.');     
+        WHEN OTHERS THEN 
+             DBMS_OUTPUT.PUT_LINE('ERREUR:' || SQLERRM );
+             
+END supprimer_passengers ; 
+/
