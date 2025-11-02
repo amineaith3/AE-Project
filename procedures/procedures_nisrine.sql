@@ -113,3 +113,61 @@ EXCEPTION
           
 END ajouter_reservations;
 \
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE modifier_passengers ( 
+       p_Passenger_id IN NUMBER, 
+       p_prenom IN VARCHAR2,
+       p_nom IN VARCHAR2,
+       p_Contact IN VARCHAR2,
+       p_Nationality IN VARCHAR2 
+) 
+IS 
+     v_count NUMBER
+     
+BEGIN 
+     IF p_prenom IS NULL OR p_nom IS NULL OR p_Contact IS NULL THEN
+        DBMS_OUTPUT.PUT_LINE('Erreur : les champs prénom, nom et contact sont obligatoires.');
+        RETURN;
+     END IF;
+
+
+     IF INSTR(p_Contact, '@') = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Erreur : email invalide.');
+        RETURN;
+     END IF;
+
+
+     SELECT COUNT(*) INTO v_count
+     FROM  Passengers
+     WHERE Passenger_id = p_Passenger_id ; 
+     
+     
+     IF v_count = 0 THEN 
+        DBMS_OUTPUT.PUT_LINE('Erreur : ID de Ce Passenger n existe pas.');
+     ELSE 
+        UPDATE passengers 
+        SET prenom      = p_prenom,
+            nom         = p_nom,
+            contact     = p_contact,
+            nationality = p_nationality
+        WHERE Passenger_id = p_Passenger_id ; 
+        
+        COMMIT; 
+        DBMS_OUTPUT.PUT_LINE('Passager mis à jour avec succès.');
+     END IF ; 
+     
+     
+EXCEPTION
+        WHEN NO_DATA_FOUND THEN 
+             DBMS_OUTPUT.PUT_LINE('ERREUR: ID PASSAGER N EXISTE PAS ');
+        WHEN VALUE_ERROR THEN
+             DBMS_OUTPUT.PUT_LINE('Erreur : type de donnée invalide.');     
+        WHEN OTHERS THEN 
+             DBMS_OUTPUT.PUT_LINE('ERREUR:' || SQLERRM );
+
+END modifier_passengers ; 
+\
