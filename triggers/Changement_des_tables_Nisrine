@@ -1,0 +1,7 @@
+ALTER TABLE passengers
+ADD Guardian_id NUMBER ;
+
+ALTER TABLE passengers
+ADD Age_pass NUMBER ;
+
+SELECT * FROM passengers ;
