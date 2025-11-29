@@ -2,7 +2,6 @@ CREATE OR REPLACE PROCEDURE add_new_aircraft(
     Avion_id_p IN NUMBER,
     Modele_p IN VARCHAR2,
     MaxCapacity_p IN NUMBER,
-    CurrentCapacity_p IN NUMBER,
     State_p IN VARCHAR2
 )
 
@@ -20,12 +19,11 @@ IF aircraft_exist=0 THEN
     RAISE_APPLICATION_ERROR(-20001,'aircraft already exist');
     
 ELSE 
-    INSERT INTO Aircrafts  (Avion_id, Modele, MaxCapacity, CurrentCapacity, State)
+    INSERT INTO Aircrafts  (Avion_id, Modele, MaxCapacit, State)
     VALUES (
         Avion_id_p,
         Modele_p,
         MaxCapacity_p,
-        CurrentCapacity_p,
         State_p
     );
 END IF;
@@ -37,7 +35,6 @@ CREATE OR REPLACE PROCEDURE update_aircraft(
     Avion_id_p IN NUMBER,
     Modele_p IN VARCHAR2,
     MaxCapacity_p IN NUMBER,
-    CurrentCapacity_p IN NUMBER,
     State_p IN VARCHAR2
 )
 IS
@@ -54,7 +51,6 @@ BEGIN
         SET 
             Modele        = COALESCE(Modele_p, Modele),
             MaxCapacity   = COALESCE(MaxCapacity_p, MaxCapacity),
-            CurrentCapacity = COALESCE(CurrentCapacity_p, CurrentCapacity),
             State         = COALESCE(State_p, State)
         WHERE Avion_id=Avion_id_p;
     END IF;
@@ -86,7 +82,6 @@ CREATE OR REPLACE PROCEDURE select_aircraft_by_id(
     Avion_id_p IN NUMBER,
     Modele_p OUT VARCHAR2,
     MaxCapacity_p OUT NUMBER,
-    CurrentCapacity_p OUT NUMBER,
     State_p OUT VARCHAR2
 )
 IS
@@ -100,8 +95,8 @@ BEGIN
     IF aircraft_exist = 0 THEN 
         RAISE_APPLICATION_ERROR(-20002, 'Aircraft not found.');
     ELSE
-        SELECT Modele, MaxCapacity, CurrentCapacity, State
-        INTO Modele_p, MaxCapacity_p, CurrentCapacity_p, State_p
+        SELECT Modele, MaxCapacity, State
+        INTO Modele_p, MaxCapacity_p, State_p
         FROM Aircrafts
         WHERE Avion_id = Avion_id_p;
     END IF;
