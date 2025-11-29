@@ -62,25 +62,6 @@ END;
 /
 
 
-CREATE OR REPLACE FUNCTION get_aircraft_currentCapacity(Avion_id_p IN NUMBER)
-RETURN NUMBER
-IS
-    aircraft_currentCapacity_v NUMBER;
-BEGIN
-    
-    BEGIN
-    SELECT CurrentCapacity INTO aircraft_currentCapacity_v
-    FROM Aircrafts
-    WHERE Avion_id=Avion_id_p;
-    
-    RETURN aircraft_currentCapacity_v;
-    
-    EXCEPTION 
-        WHEN NO_DATA_FOUND THEN
-            RETURN NULL;
-    END;
-END;
-/
 
 CREATE OR REPLACE FUNCTION get_aircraft_state(Avion_id_p IN NUMBER)
 RETURN VARCHAR2
