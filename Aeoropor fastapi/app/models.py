@@ -6,7 +6,7 @@ from .database import Base
 class Passengers(Base) : 
        __tablename__ = "PASSENGERS"
        
-       passenger_id = Column(Integer, primary_key=True)
+       PassengerId = Column(Integer, primary_key=True)
        FirstName = Column(String(25), nullable= False)
        LastName = Column(String(25), nullable= False)
        NumPasseport = Column(Integer , unique = True )
@@ -65,5 +65,6 @@ class Maintenance(Base):
 
 
  
+
 
 
