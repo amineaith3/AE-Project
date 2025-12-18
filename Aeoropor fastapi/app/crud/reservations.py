@@ -4,11 +4,16 @@ from fastapi import HTTPException
 from app.models import Reservations, Flights, Passengers, Aircrafts
 from app.schemas import ReservationCreate
 
+
 def get_reservation(db: Session, res_id: int):
-    return db.query(Reservations).filter(Reservations.ReservationID == res_id).first()
+    return db.query(Reservations).filter(
+        Reservations.ReservationID == res_id
+    ).first()
+
 
 def get_all_reservations(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Reservations).offset(skip).limit(limit).all()
+
 
 def create_reservation(db: Session, res: ReservationCreate):
     try:
@@ -17,38 +22,66 @@ def create_reservation(db: Session, res: ReservationCreate):
             Reservations.VolNum == res.VolNum
         ).first()
         if existing:
-            raise HTTPException(status_code=400, detail="Le passager a déjà une réservation pour ce vol.")
+            raise HTTPException(
+                status_code=400,
+                detail="Le passager a déjà une réservation pour ce vol."
+            )
 
-        flight = db.query(Flights).filter(Flights.VolNum == res.VolNum).first()
+        flight = db.query(Flights).filter(
+            Flights.VolNum == res.VolNum
+        ).first()
         if not flight:
             raise HTTPException(status_code=404, detail="Vol non trouvé.")
 
-        aircraft = db.query(Aircrafts).filter(Aircrafts.AvionID == flight.AvionID).first()
+        aircraft = db.query(Aircrafts).filter(
+            Aircrafts.AvionID == flight.AvionID
+        ).first()
         if flight.CurrentCapacity >= aircraft.MaxCapacity:
-            raise HTTPException(status_code=400, detail="L'avion est plein, réservation impossible.")
+            raise HTTPException(
+                status_code=400,
+                detail="L'avion est plein, réservation impossible."
+            )
 
-        passenger = db.query(Passengers).filter(Passengers.PassengerId == res.PassengerID).first()
-        if passenger.Age < 18:
+        passenger = db.query(Passengers).filter(
+            Passengers.PassengerId == res.PassengerID
+        ).first()
+        if not passenger:
+            raise HTTPException(status_code=404, detail="Passager non trouvé.")
+
+        if passenger.Age_pass < 18:
             if not res.guardian_id:
-                raise HTTPException(status_code=400, detail="Passager mineur : Guardian_id obligatoire.")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Passager mineur : guardian_id obligatoire."
+                )
+
+            guardian = db.query(Passengers).filter(
+                Passengers.PassengerId == res.guardian_id
+            ).first()
+            if not guardian:
+                raise HTTPException(status_code=404, detail="Tuteur non trouvé.")
+
+            if guardian.Age_pass < 18:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Le tuteur ne peut pas être mineur."
+                )
 
             guardian_res = db.query(Reservations).filter(
                 Reservations.PassengerID == res.guardian_id,
                 Reservations.VolNum == res.VolNum
             ).first()
             if not guardian_res:
-                raise HTTPException(status_code=400, detail="Le tuteur doit avoir une réservation sur ce vol.")
-
-            guardian_info = db.query(Passengers).filter(
-                Passengers.PassengerId == res.guardian_id
-            ).first()
-            if guardian_info.Age < 18:
-                raise HTTPException(status_code=400, detail="Le tuteur ne peut pas être un mineur.")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Le tuteur doit avoir une réservation sur ce vol."
+                )
 
         db.execute(
             text("""
-            INSERT INTO RESERVATIONS (PassengerID, VolNum, SeatCode, State, guardian_id)
-            VALUES (:pid, :vnum, :seat, 'Pending', :gid)
+                INSERT INTO RESERVATIONS
+                (PassengerID, VolNum, SeatCode, State, guardian_id)
+                VALUES (:pid, :vnum, :seat, 'Pending', :gid)
             """),
             {
                 "pid": res.PassengerID,
@@ -70,14 +103,18 @@ def create_reservation(db: Session, res: ReservationCreate):
         db.rollback()
         raise e
 
+
 def delete_reservation(db: Session, res_id: int):
     res = get_reservation(db, res_id)
     if not res:
         return None
     try:
-        flight = db.query(Flights).filter(Flights.VolNum == res.VolNum).first()
-        if flight:
+        flight = db.query(Flights).filter(
+            Flights.VolNum == res.VolNum
+        ).first()
+        if flight and flight.CurrentCapacity > 0:
             flight.CurrentCapacity -= 1
+
         db.delete(res)
         db.commit()
     except Exception as e:
