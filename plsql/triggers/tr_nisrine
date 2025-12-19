@@ -59,6 +59,10 @@ END;
 /
 
 
+
+
+-- verifier si le seat est deja reserve ou le passengers a effectué more d 'un deux reservation 
+
 CREATE OR REPLACE TRIGGER trg_reservation_checks
 BEFORE INSERT ON Reservations
 FOR EACH ROW
@@ -87,5 +91,66 @@ BEGIN
 
 END;
 /
+
+
+
+
+
+
+-verifier la capacité si le vol est plein ou pas 
+
+
+CREATE OR REPLACE TRIGGER trg_check_flight_capacity
+BEFORE INSERT ON Reservations
+FOR EACH ROW
+DECLARE
+    v_current NUMBER;
+    v_max     NUMBER;
+BEGIN
+    -- Récupérer CurrentCapacity du vol + MaxCapacity de l'avion du vol
+
+    SELECT f.CurrentCapacity, a.MaxCapacity
+    INTO v_current, v_max
+    FROM Flights f
+    JOIN Aircrafts a ON a.Avion_id = f.Avion_id
+    WHERE f.vol_num = :NEW.vol_num;
+
+    IF v_current >= v_max THEN
+        RAISE_APPLICATION_ERROR(-20001,'Reservation refusee: le vol est plein.');
+    END IF;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20001,'Reservation refusee: vol_num ou avion_id invalide.');
+END;
+/
+
+--incrementation apres l'insertion de la reservation 
+
+CREATE OR REPLACE TRIGGER trg_inc_flight_capacity 
+AFTER INSERT ON Reservations
+FOR EACH ROW 
+BEGIN 
+    UPDATE flights 
+    SET CurrentCapacity = CurrentCapacity +1
+    WHERE vol_num = :NEW.vol_num;
+END;
+/ 
+
+
+-- lorsque une reservation est supprimée , decrementer la CurrentCapacity 
+CREATE OR REPLACE TRIGGER trg_dec_capacity_after_delete
+AFTER DELETE ON Reservations
+FOR EACH ROW
+BEGIN
+    UPDATE Flights
+    SET CurrentCapacity = CurrentCapacity - 1
+    WHERE vol_num = :OLD.vol_num;
+END;
+/
+
+
+ 
+
 
 
