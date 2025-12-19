@@ -13,7 +13,6 @@ CREATE TABLE Aircrafts (
        Avion_id NUMBER PRIMARY KEY,
        Modele VARCHAR(50) NOT NULL,
        MaxCapacity NUMBER NOT NULL,
-       CurrentCapacity NUMBER NOT NULL,
        State VARCHAR(50)
 ); 
        
