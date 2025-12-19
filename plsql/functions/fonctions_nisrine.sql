@@ -89,5 +89,101 @@ EXCEPTION
 END check_seat_reserved ; 
 /
 
+--RElation mineur-majeur-adulte hh 
+-- 1) Si le passenger est mineur -> retourner l'id du guardian (sinon NULL)
+CREATE OR REPLACE FUNCTION get_guardian_if_minor(
+       p_passenger_id IN NUMBER
+)
+RETURN NUMBER
+IS
+       v_age NUMBER;
+       v_guardian NUMBER;
+BEGIN
+       SELECT Age_pass INTO v_age
+       FROM Passengers
+       WHERE Passenger_id = p_passenger_id;
+
+       IF v_age >= 18 THEN
+            RETURN NULL;
+       END IF;
+
+       BEGIN
+            SELECT Guardian_id INTO v_guardian
+            FROM Reservations
+            WHERE Passenger_id = p_passenger_id
+              AND Guardian_id IS NOT NULL
+              AND ROWNUM = 1;
+
+            RETURN v_guardian;
+       EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                 RETURN NULL;
+       END;
+
+EXCEPTION
+       WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('ERREUR : Passenger inexistant.');
+            RETURN NULL;
+       WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('ERREUR : ' || SQLERRM);
+            RETURN NULL;
+END get_guardian_id_minor;
+/
+
+
+-- 2) Si le passenger est adulte -> retourner la liste des ids mineurs liés (sinon NULL)
+CREATE OR REPLACE FUNCTION get_minors_ids_if_adult(
+       p_passenger_id IN NUMBER
+)
+RETURN VARCHAR2
+IS
+       v_age NUMBER;
+       v_minors VARCHAR2(4000);
+BEGIN
+       SELECT Age_pass INTO v_age
+       FROM Passengers
+       WHERE Passenger_id = p_passenger_id;
+
+       IF v_age < 18 THEN
+            RETURN NULL;
+       END IF;
+
+       SELECT LISTAGG(DISTINCT Passenger_id, ',') WITHIN GROUP (ORDER BY Passenger_id)
+       INTO v_minors
+       FROM Reservations
+       WHERE Guardian_id = p_passenger_id;
+
+       RETURN v_minors;  -- NULL si aucun mineur
+
+EXCEPTION
+       WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('ERREUR : Passenger inexistant.');
+            RETURN NULL;
+       WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('ERREUR : ' || SQLERRM);
+            RETURN NULL;
+END get_minors_ids_if_adult;
+/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
