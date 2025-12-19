@@ -1,23 +1,60 @@
-CREATE OR REPLACE TRIGGER trg_minor_guardian 
-BEFORE INSERT ON passengers 
-FOR EACH ROW 
+
+--verifier est ce que le passenger est adule avant la reservation 
+
+CREATE OR REPLACE TRIGGER trg_minor_guardian
+BEFORE INSERT OR UPDATE ON Reservations
+FOR EACH ROW
 DECLARE 
-  v_age_guardian NUMBER; 
+  v_age_passenger NUMBER; 
+  v_age_guardian  NUMBER; 
+  v_count         NUMBER; 
 BEGIN 
-  IF :NEW.age_pass < 18 THEN 
+  -- Récupérer l'âge du passager
+  BEGIN
+     SELECT age_pass
+     INTO v_age_passenger
+     FROM passengers
+     WHERE passenger_id = :NEW.passenger_id;
+  EXCEPTION
+     WHEN NO_DATA_FOUND THEN 
+        RAISE_APPLICATION_ERROR(-20001,'ID de ce passenger n''existe pas.');
+  END;
+
+  -- Si passager mineur => guardian obligatoire
+  IF v_age_passenger < 18 THEN 
+
      IF :NEW.guardian_id IS NULL THEN
-         RAISE_APPLICATION_ERROR ( -20001 ,'Un passager mineur doit avoir un guardian.') ; 
-     END IF ;
+         RAISE_APPLICATION_ERROR(-20001,'Un passager mineur doit avoir un guardian.');
+     END IF;
+
+     -- Vérifier que le guardian existe + récupérer son âge
      BEGIN 
-        SELECT age_pass 
-        INTO v_age_guardian 
-        FROM passengers 
-        WHERE :NEW.guardian_id = passenger_id 
+        SELECT age_pass
+        INTO v_age_guardian
+        FROM passengers
+        WHERE passenger_id = :NEW.guardian_id;
      EXCEPTION 
         WHEN NO_DATA_FOUND THEN 
-        RAISE_APPLICATION_ERROR(-20001,'ID de ce guardian n''existe pas.'); 
-     END ; 
-     IF v_age_guardian <18 THEN 
-        RAISE_APPLICATION_ERROR(-20001,'le guardien doit etre un adulte.'); 
-  END IF ; 
-END ;
+           RAISE_APPLICATION_ERROR(-20001,'ID de ce guardian n''existe pas.');
+     END; 
+
+     -- Guardian doit être un adulte
+     IF v_age_guardian < 18 THEN 
+        RAISE_APPLICATION_ERROR(-20001,'Le guardian doit etre un adulte.');
+     END IF;
+
+     -- Le Guardian doit avoir une réservation sur le même vol
+     SELECT COUNT(*) INTO v_count
+     FROM reservations
+     WHERE passenger_id = :NEW.guardian_id
+       AND vol_num      = :NEW.vol_num;
+
+     IF v_count = 0 THEN 
+        RAISE_APPLICATION_ERROR(-20001,'Le guardian doit avoir une reservation sur le meme vol.');
+     END IF;
+
+  END IF; 
+
+END;
+/
+
