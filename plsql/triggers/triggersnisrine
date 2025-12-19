@@ -1,0 +1,28 @@
+CREATE OR REPLACE TRIGGER trg_reservation_checks
+BEFORE INSERT ON Reservations
+FOR EACH ROW
+DECLARE
+    v_count NUMBER;
+BEGIN
+    -- Vérifier si le seat est déjà réservé pour le même vol
+    SELECT COUNT(*) INTO v_count
+    FROM Reservations
+    WHERE vol_num  = :NEW.vol_num
+      AND SeatCode = :NEW.SeatCode;
+
+    IF v_count > 0 THEN
+        RAISE_APPLICATION_ERROR(-20001,'Ce seat est deja reserve pour ce vol.');
+    END IF;
+
+    -- Vérifier si le passager a déjà une réservation pour le même vol
+    SELECT COUNT(*) INTO v_count
+    FROM Reservations
+    WHERE Passenger_id = :NEW.Passenger_id
+      AND vol_num      = :NEW.vol_num;
+
+    IF v_count > 0 THEN
+        RAISE_APPLICATION_ERROR(-20001,'Ce passager a deja une reservation pour ce vol.');
+    END IF;
+
+END;
+/
