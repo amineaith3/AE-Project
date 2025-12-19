@@ -154,3 +154,50 @@ END;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+--Garder la relation logiques entre les states et eliminer les changement illogique 
+
+CREATE OR REPLACE TRIGGER trg_reservation_state_check
+BEFORE UPDATE OF State ON Reservations
+FOR EACH ROW
+BEGIN
+    -- Empêcher modification si déjà annulée
+    IF :OLD.State = 'Canceled' AND :NEW.State <> 'Canceled' THEN
+        RAISE_APPLICATION_ERROR(-20001,'Transition interdite : une reservation annulee ne peut pas etre modifiee.');
+    END IF;
+
+    -- Empêcher retour en arrière depuis Boarded
+    IF :OLD.State = 'Boarded' AND :NEW.State <> 'Boarded' THEN
+        RAISE_APPLICATION_ERROR(-20001,'Transition interdite : une reservation deja boarded ne peut pas changer.');
+    END IF;
+
+    -- Empêcher Pending -> Boarded directement (doit passer par Confirmed)
+    IF :OLD.State = 'Pending' AND :NEW.State = 'Boarded' THEN
+        RAISE_APPLICATION_ERROR(-20001,'Transition interdite : Pending -> Boarded (doit etre Confirmed).');
+    END IF;
+
+    -- Empêcher Cancelled après Boarded
+    IF :OLD.State = 'Boarded' AND :NEW.State = 'Canceled' THEN
+        RAISE_APPLICATION_ERROR(-20001,'Transition interdite : Boarded -> Canceled.');
+    END IF;
+
+END;
+/
+
+
+
+
+
+
+
