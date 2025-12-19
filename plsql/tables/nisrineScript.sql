@@ -22,7 +22,7 @@ CREATE TABLE Flights (
     destination VARCHAR2(50) NOT NULL,
     departure_time DATE NOT NULL, 
     arrival_time DATE NOT NULL,
-    CurrentCapacity NUMBER NOT NULL,
+    CurrentCapacity NUMBER DEFAULT 0 NOT NULL,
     state VARCHAR2(50),
     Avion_id NUMBER,
     CONSTRAINT fk_avion FOREIGN KEY (Avion_id) REFERENCES Aircrafts(Avion_id)
@@ -31,11 +31,11 @@ CREATE TABLE Flights (
 
 CREATE TABLE Reservations (
        reservation_id NUMBER PRIMARY KEY, 
-       Passenger_id NUMBER,
+       Passenger_id NUMBER NOT NULL,
        CONSTRAINT fk_passenger FOREIGN KEY (Passenger_id) REFERENCES Passengers(Passenger_id), 
-       vol_num NUMBER, 
+       vol_num NUMBER NOT NULL, 
        CONSTRAINT fk_flights FOREIGN KEY (vol_num) REFERENCES Flights(vol_num),
-       SeatCode VARCHAR(25),
+       SeatCode VARCHAR(25) NOT NULL,
        State VARCHAR(50),
        Guardian_id NUMBER,
        CONSTRAINT fk_guardian FOREIGN KEY (Guardian_id) REFERENCES Passengers(Passenger_id)
