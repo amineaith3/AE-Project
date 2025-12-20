@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-# --- PROCEDURES EXISTANTES ---
+
 def create_reservation(db: Session, passenger_id, volnum, seatcode, guardian_id=None):
     result = db.execute(
         text("""
@@ -38,7 +38,7 @@ def list_reservations(db: Session):
     cursor = db.execute(text("BEGIN list_reservations_proc(:res); END;"), {"res": None})
     return cursor.fetchall()
 
-# --- NOUVELLES FONCTIONS ---
+
 def get_total_reservations(db: Session, volnum):
     return db.execute(text("SELECT get_total_reservations(:vnum) FROM dual"), {"vnum": volnum}).scalar()
 
