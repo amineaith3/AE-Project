@@ -6,7 +6,6 @@ from app.crud import maintenance as crud_maint
 
 router = APIRouter(prefix="/maintenance", tags=["Maintenance"])
 
-
 @router.post("/")
 def create_maint(maint: MaintenanceCreate, db: Session = Depends(get_db)):
     message = crud_maint.create_maintenance(db, maint.AvionID, maint.OperationDate, maint.Type)
@@ -26,7 +25,6 @@ def get_maint(maintenance_id: int, db: Session = Depends(get_db)):
 def list_maint(db: Session = Depends(get_db)):
     maint_list = crud_maint.list_maintenance(db)
     return {"maintenances": maint_list}
-
 
 @router.get("/total/{avion_id}")
 def total_maintenance(avion_id: int, db: Session = Depends(get_db)):
