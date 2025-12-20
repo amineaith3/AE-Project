@@ -6,7 +6,7 @@ from app.crud import reservations as crud_res
 
 router = APIRouter(prefix="/reservations", tags=["Reservations"])
 
-# --- PROCEDURES ---
+
 @router.post("/")
 def create_res(res: ReservationCreate, db: Session = Depends(get_db)):
     message = crud_res.create_reservation(db, res.PassengerID, res.VolNum, res.SeatCode, res.guardian_id)
@@ -27,7 +27,7 @@ def list_res(db: Session = Depends(get_db)):
     res_list = crud_res.list_reservations(db)
     return {"reservations": res_list}
 
-# --- FONCTIONS ---
+
 @router.get("/total/{volnum}")
 def total_reservations(volnum: int, db: Session = Depends(get_db)):
     total = crud_res.get_total_reservations(db, volnum)
