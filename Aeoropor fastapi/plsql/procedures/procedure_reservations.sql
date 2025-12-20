@@ -13,7 +13,7 @@ AS
     v_existing NUMBER;
     v_guardian_res NUMBER;
 BEGIN
-    
+    -- Vérifier si le passager a déjà une réservation
     SELECT COUNT(*) INTO v_existing
     FROM RESERVATIONS
     WHERE PassengerID = p_passenger_id
@@ -24,7 +24,7 @@ BEGIN
         RETURN;
     END IF;
 
-  
+    -- Capacités
     SELECT CurrentCapacity, AvionID INTO v_flight_capacity, v_aircraft_capacity
     FROM FLIGHTS
     WHERE VolNum = p_volnum;
@@ -38,7 +38,7 @@ BEGIN
         RETURN;
     END IF;
 
-
+    -- Vérifier mineur et guardian
     SELECT Age_pass INTO v_passenger_age
     FROM PASSENGERS
     WHERE PassengerId = p_passenger_id;
@@ -69,11 +69,11 @@ BEGIN
         END IF;
     END IF;
 
-
+    -- Insertion réservation
     INSERT INTO RESERVATIONS (PassengerID, VolNum, SeatCode, State, guardian_id)
     VALUES (p_passenger_id, p_volnum, p_seatcode, 'Pending', p_guardian_id);
 
-    
+    -- Mise à jour capacité vol
     UPDATE FLIGHTS
     SET CurrentCapacity = CurrentCapacity + 1
     WHERE VolNum = p_volnum;
@@ -85,53 +85,4 @@ EXCEPTION
         ROLLBACK;
         p_result := 'Erreur : ' || SQLERRM;
 END create_reservation_proc;
-/
-CREATE OR REPLACE PROCEDURE delete_reservation_proc(
-    p_res_id IN NUMBER,
-    p_result OUT VARCHAR2
-)
-AS
-    v_volnum NUMBER;
-BEGIN
-    SELECT VolNum INTO v_volnum
-    FROM RESERVATIONS
-    WHERE ReservationID = p_res_id;
-
-    DELETE FROM RESERVATIONS
-    WHERE ReservationID = p_res_id;
-
-    UPDATE FLIGHTS
-    SET CurrentCapacity = CurrentCapacity - 1
-    WHERE VolNum = v_volnum
-      AND CurrentCapacity > 0;
-
-    COMMIT;
-    p_result := 'Réservation annulée et capacité du vol mise à jour.';
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        p_result := 'Réservation non trouvée.';
-    WHEN OTHERS THEN
-        ROLLBACK;
-        p_result := 'Erreur : ' || SQLERRM;
-END delete_reservation_proc;
-/
-CREATE OR REPLACE PROCEDURE get_reservation_proc(
-    p_res_id IN NUMBER,
-    p_res OUT SYS_REFCURSOR
-)
-AS
-BEGIN
-    OPEN p_res FOR
-        SELECT * FROM RESERVATIONS
-        WHERE ReservationID = p_res_id;
-END get_reservation_proc;
-/
-CREATE OR REPLACE PROCEDURE list_reservations_proc(
-    p_res OUT SYS_REFCURSOR
-)
-AS
-BEGIN
-    OPEN p_res FOR
-        SELECT * FROM RESERVATIONS;
-END list_reservations_proc;
 /
