@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-
 def create_maintenance(db: Session, avion_id, operation_date, typee):
     result = db.execute(
         text("""
@@ -37,7 +36,6 @@ def get_maintenance(db: Session, maintenance_id):
 def list_maintenance(db: Session):
     cursor = db.execute(text("BEGIN list_maintenance_proc(:res); END;"), {"res": None})
     return cursor.fetchall()
-
 
 def get_total_maintenance(db: Session, avion_id):
     return db.execute(text("SELECT get_total_maintenance(:aid) FROM dual"), {"aid": avion_id}).scalar()
