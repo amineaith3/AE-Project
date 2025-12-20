@@ -18,7 +18,7 @@ BEGIN
     SELECT COUNT(*) INTO v_count
     FROM MAINTENANCE
     WHERE AvionID = p_avion_id
-      AND p_date BETWEEN OperationDate AND OperationDate; 
+      AND TRUNC(OperationDate) = TRUNC(p_date);
     RETURN v_count;
 END;
 /
