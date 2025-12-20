@@ -14,7 +14,6 @@ BEGIN
 END;
 /
 
-
 CREATE OR REPLACE TRIGGER after_insert_maintenance
 AFTER INSERT ON MAINTENANCE
 FOR EACH ROW
@@ -24,9 +23,12 @@ BEGIN
         SET State = 'Maintenance'
         WHERE AvionID = :NEW.AvionID;
     END IF;
+
+    INSERT INTO LOGS(TableName, Operation, RecordID, Details)
+    VALUES ('MAINTENANCE', 'INSERT', :NEW.MaintenanceID,
+            'AvionID='||:NEW.AvionID||', Type='||:NEW.Typee||', Date='||TO_CHAR(:NEW.OperationDate,'YYYY-MM-DD'));
 END;
 /
-
 
 CREATE OR REPLACE TRIGGER after_delete_maintenance
 AFTER DELETE ON MAINTENANCE
@@ -41,5 +43,9 @@ BEGIN
     IF v_count = 0 THEN
         UPDATE AIRCRAFTS SET State = 'Ready' WHERE AvionID = :OLD.AvionID;
     END IF;
+
+    INSERT INTO LOGS(TableName, Operation, RecordID, Details)
+    VALUES ('MAINTENANCE', 'DELETE', :OLD.MaintenanceID,
+            'AvionID='||:OLD.AvionID||', Type='||:OLD.Typee||', Date='||TO_CHAR(:OLD.OperationDate,'YYYY-MM-DD'));
 END;
 /
