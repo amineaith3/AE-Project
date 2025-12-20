@@ -1,4 +1,3 @@
-
 CREATE OR REPLACE PROCEDURE create_maintenance_proc(
     p_avion_id IN NUMBER,
     p_operation_date IN DATE,
@@ -8,7 +7,6 @@ CREATE OR REPLACE PROCEDURE create_maintenance_proc(
 AS
     v_existing NUMBER;
 BEGIN
-  
     SELECT COUNT(*) INTO v_existing
     FROM MAINTENANCE
     WHERE AvionID = p_avion_id
@@ -19,11 +17,9 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Insertion de la maintenance
     INSERT INTO MAINTENANCE (AvionID, OperationDate, Typee, State)
-    VALUES (p_avion_id, p_operation_date, p_typee, 'Planned');
+    VALUES (p_avion_id, p_operation_date, p_typee, 'Scheduled');
 
-   
     IF TRUNC(p_operation_date) = TRUNC(SYSDATE) THEN
         UPDATE AIRCRAFTS
         SET State = 'Maintenance'
@@ -53,7 +49,6 @@ BEGIN
     DELETE FROM MAINTENANCE
     WHERE MaintenanceID = p_maintenance_id;
 
-    
     DECLARE
         v_count NUMBER;
     BEGIN
@@ -75,26 +70,4 @@ EXCEPTION
         ROLLBACK;
         p_result := 'Erreur : ' || SQLERRM;
 END delete_maintenance_proc;
-/
-
-CREATE OR REPLACE PROCEDURE get_maintenance_proc(
-    p_maintenance_id IN NUMBER,
-    p_res OUT SYS_REFCURSOR
-)
-AS
-BEGIN
-    OPEN p_res FOR
-        SELECT * FROM MAINTENANCE
-        WHERE MaintenanceID = p_maintenance_id;
-END get_maintenance_proc;
-/
-
-CREATE OR REPLACE PROCEDURE list_maintenance_proc(
-    p_res OUT SYS_REFCURSOR
-)
-AS
-BEGIN
-    OPEN p_res FOR
-        SELECT * FROM MAINTENANCE;
-END list_maintenance_proc;
 /
