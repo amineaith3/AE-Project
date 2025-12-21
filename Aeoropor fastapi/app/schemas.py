@@ -32,6 +32,7 @@ class PassengerResponse(PassengerBase):
 # ============================
 
 class AircraftBase(BaseModel):
+    AvionID:int
     Modele: str
     MaxCapacity: int
     State: Optional[str] = None
@@ -40,9 +41,10 @@ class AircraftBase(BaseModel):
 class AircraftCreate(AircraftBase):
     pass
 
+class AircraftUpdate(AircraftBase):
+    pass
 
 class AircraftResponse(AircraftBase):
-    AvionID: int
 
     class Config:
         orm_mode = True

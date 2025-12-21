@@ -2,16 +2,20 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv() 
 
 # ================================
-#   ORACLE DATABASE CONFIG
+#   ORACLE DATABASE CONFIG (FROM .env)
 # ================================
+ORACLE_USER = os.getenv("ORACLE_USER", "AE")           # Default to "AE" if not in .env
+ORACLE_PASSWORD = os.getenv("ORACLE_PASSWORD", "AE")
+ORACLE_DSN = os.getenv("ORACLE_DSN", "localhost:1521/?service_name=XEPDB1")
 
-ORACLE_USER = "YOUR_USER"           # ex: SYSTEM ou AEROPORT
-ORACLE_PASSWORD = "YOUR_PASSWORD"   # ton mot de passe Oracle
-ORACLE_DSN = "localhost:1521/orcl"  # adapter selon ta config Oracle
-
-DATABASE_URL = f"oracle+oracledb://{ORACLE_USER}:{ORACLE_PASSWORD}@{ORACLE_DSN}"
+DATABASE_URL = f"oracle+oracledb://{ORACLE_USER}:{ORACLE_PASSWORD}@{ORACLE_DSN}" 
 
 
 # ================================
