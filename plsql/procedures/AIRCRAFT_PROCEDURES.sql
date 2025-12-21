@@ -15,7 +15,7 @@ SELECT COUNT(*) INTO aircraft_exist
 FROM Aircrafts
 WHERE Avion_id=Avion_id_p;
 
-IF aircraft_exist=0 THEN
+IF aircraft_exist !=0 THEN
     RAISE_APPLICATION_ERROR(-20001,'aircraft already exist');
     
 ELSE 
