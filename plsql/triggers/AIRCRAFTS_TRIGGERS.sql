@@ -1,11 +1,11 @@
 CREATE OR REPLACE TRIGGER trg_aircraft_bi
-BEFORE INSERT ON aircrafts
+BEFORE INSERT OR UPDATE ON aircrafts
 FOR EACH ROW
 BEGIN
     IF :NEW.MaxCapacity <= 0 THEN
         RAISE_APPLICATION_ERROR(-20001, 'MaxCapacity must be positive');
     END IF;
-
+    
     IF :NEW.State IS NULL THEN
         :NEW.State := 'Ready';
     END IF;
@@ -17,9 +17,7 @@ CREATE OR REPLACE TRIGGER trg_aircraft_bu
 BEFORE UPDATE ON Aircrafts
 FOR EACH ROW
 BEGIN
-    IF :NEW.MaxCapacity <= 0 THEN
-        RAISE_APPLICATION_ERROR(-20001, 'MaxCapacity must be positive');
-    END IF;
+    
     IF :OLD.State = 'Out of Service' AND 
    (:NEW.State = 'Maintenance' OR :NEW.State = 'Ready' OR :NEW.State = 'In Service') THEN
         RAISE_APPLICATION_ERROR(-20002, 'Cannot reactivate a out of Service aircraft');
