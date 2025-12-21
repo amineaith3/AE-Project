@@ -6,14 +6,13 @@ from .database import Base
 class Passengers(Base) : 
        __tablename__ = "PASSENGERS"
        
-       PassengerId = Column(Integer, primary_key=True)
-       FirstName = Column(String(25), nullable= False)
-       LastName = Column(String(25), nullable= False)
-       NumPasseport = Column(Integer , unique = True )
-       Contact = Column (String , nullable= False )
-       Nationality = Column(String(25), nullable= False)
-       Age_pass = Column(Integer , nullable= False ) 
-
+    Passenger_id = Column(Integer, primary_key=True, index=True)
+    prenom = Column(String(50), nullable=False)
+    nom = Column(String(50), nullable=False)
+    NumPasseport = Column(Integer, unique=True)
+    Contact = Column(String(50), nullable=False)
+    Nationality = Column(String(50), nullable=False)
+    Age_pass = Column(Integer, nullable=False)
 
 class Aircrafts(Base):
     __tablename__ = "AIRCRAFTS"
@@ -40,13 +39,13 @@ class Flights(Base):
 
 class Reservations(Base):
     __tablename__ = "RESERVATIONS"
-
-    ReservationID = Column(Integer, primary_key=True)
-    PassengerID = Column(Integer, ForeignKey("PASSENGERS.PassengerID"))
-    VolNum = Column(Integer, ForeignKey("FLIGHTS.VolNum"))
-    SeatCode = Column(String(10), unique=True)  # UNIQUE seat per flight
-    State = Column(String(20))  # Confirmed / Waiting / Canceled
-    guardian_id = Column(Integer, ForeignKey("PASSENGERS.passenger_id"))
+       
+    reservation_id = Column(Integer, primary_key=True, index=True)
+    Passenger_id = Column(Integer, ForeignKey("PASSENGERS.Passenger_id"), nullable=False)
+    vol_num = Column(Integer, ForeignKey("FLIGHTS.vol_num"), nullable=False)
+    SeatCode = Column(String(25), nullable=False)   # pas unique ici (géré par triggers)
+    State = Column(String(50))
+    Guardian_id = Column(Integer, ForeignKey("PASSENGERS.Passenger_id"))
 
 
 class Maintenance(Base):
@@ -65,6 +64,7 @@ class Maintenance(Base):
 
 
  
+
 
 
 

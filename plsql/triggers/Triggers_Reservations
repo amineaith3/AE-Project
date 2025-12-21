@@ -1,0 +1,203 @@
+
+--verifier est ce que le passenger est adule avant la reservation 
+
+CREATE OR REPLACE TRIGGER trg_minor_guardian
+BEFORE INSERT OR UPDATE ON Reservations
+FOR EACH ROW
+DECLARE 
+  v_age_passenger NUMBER; 
+  v_age_guardian  NUMBER; 
+  v_count         NUMBER; 
+BEGIN 
+  -- Récupérer l'âge du passager
+  BEGIN
+     SELECT age_pass
+     INTO v_age_passenger
+     FROM passengers
+     WHERE passenger_id = :NEW.passenger_id;
+  EXCEPTION
+     WHEN NO_DATA_FOUND THEN 
+        RAISE_APPLICATION_ERROR(-20001,'ID de ce passenger n''existe pas.');
+  END;
+
+  -- Si passager mineur => guardian obligatoire
+  IF v_age_passenger < 18 THEN 
+
+     IF :NEW.guardian_id IS NULL THEN
+         RAISE_APPLICATION_ERROR(-20001,'Un passager mineur doit avoir un guardian.');
+     END IF;
+
+     -- Vérifier que le guardian existe + récupérer son âge
+     BEGIN 
+        SELECT age_pass
+        INTO v_age_guardian
+        FROM passengers
+        WHERE passenger_id = :NEW.guardian_id;
+     EXCEPTION 
+        WHEN NO_DATA_FOUND THEN 
+           RAISE_APPLICATION_ERROR(-20001,'ID de ce guardian n''existe pas.');
+     END; 
+
+     -- Guardian doit être un adulte
+     IF v_age_guardian < 18 THEN 
+        RAISE_APPLICATION_ERROR(-20001,'Le guardian doit etre un adulte.');
+     END IF;
+
+     -- Le Guardian doit avoir une réservation sur le même vol
+     SELECT COUNT(*) INTO v_count
+     FROM reservations
+     WHERE passenger_id = :NEW.guardian_id
+       AND vol_num      = :NEW.vol_num;
+
+     IF v_count = 0 THEN 
+        RAISE_APPLICATION_ERROR(-20001,'Le guardian doit avoir une reservation sur le meme vol.');
+     END IF;
+
+  END IF; 
+
+END;
+/
+
+
+
+
+-- verifier si le seat est deja reserve ou le passengers a effectué more d 'un deux reservation 
+
+CREATE OR REPLACE TRIGGER trg_reservation_checks
+BEFORE INSERT ON Reservations
+FOR EACH ROW
+DECLARE
+    v_count NUMBER;
+BEGIN
+    -- Vérifier si le seat est déjà réservé pour le même vol
+    SELECT COUNT(*) INTO v_count
+    FROM Reservations
+    WHERE vol_num  = :NEW.vol_num
+      AND SeatCode = :NEW.SeatCode;
+
+    IF v_count > 0 THEN
+        RAISE_APPLICATION_ERROR(-20001,'Ce seat est deja reserve pour ce vol.');
+    END IF;
+
+    -- Vérifier si le passager a déjà une réservation pour le même vol
+    SELECT COUNT(*) INTO v_count
+    FROM Reservations
+    WHERE Passenger_id = :NEW.Passenger_id
+      AND vol_num      = :NEW.vol_num;
+
+    IF v_count > 0 THEN
+        RAISE_APPLICATION_ERROR(-20001,'Ce passager a deja une reservation pour ce vol.');
+    END IF;
+
+END;
+/
+
+
+
+
+
+
+-verifier la capacité si le vol est plein ou pas 
+
+
+CREATE OR REPLACE TRIGGER trg_check_flight_capacity
+BEFORE INSERT ON Reservations
+FOR EACH ROW
+DECLARE
+    v_current NUMBER;
+    v_max     NUMBER;
+BEGIN
+    -- Récupérer CurrentCapacity du vol + MaxCapacity de l'avion du vol
+
+    SELECT f.CurrentCapacity, a.MaxCapacity
+    INTO v_current, v_max
+    FROM Flights f
+    JOIN Aircrafts a ON a.Avion_id = f.Avion_id
+    WHERE f.vol_num = :NEW.vol_num;
+
+    IF v_current >= v_max THEN
+        RAISE_APPLICATION_ERROR(-20001,'Reservation refusee: le vol est plein.');
+    END IF;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20001,'Reservation refusee: vol_num ou avion_id invalide.');
+END;
+/
+
+--incrementation apres l'insertion de la reservation 
+
+CREATE OR REPLACE TRIGGER trg_inc_flight_capacity 
+AFTER INSERT ON Reservations
+FOR EACH ROW 
+BEGIN 
+    UPDATE flights 
+    SET CurrentCapacity = CurrentCapacity +1
+    WHERE vol_num = :NEW.vol_num;
+END;
+/ 
+
+
+-- lorsque une reservation est supprimée , decrementer la CurrentCapacity 
+CREATE OR REPLACE TRIGGER trg_dec_capacity_after_delete
+AFTER DELETE ON Reservations
+FOR EACH ROW
+BEGIN
+    UPDATE Flights
+    SET CurrentCapacity = CurrentCapacity - 1
+    WHERE vol_num = :OLD.vol_num;
+END;
+/
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--Garder la relation logiques entre les states et eliminer les changement illogique 
+
+CREATE OR REPLACE TRIGGER trg_reservation_state_check
+BEFORE UPDATE OF State ON Reservations
+FOR EACH ROW
+BEGIN
+    -- Empêcher modification si déjà annulée
+    IF :OLD.State = 'Canceled' AND :NEW.State <> 'Canceled' THEN
+        RAISE_APPLICATION_ERROR(-20001,'Transition interdite : une reservation annulee ne peut pas etre modifiee.');
+    END IF;
+
+    -- Empêcher retour en arrière depuis Boarded
+    IF :OLD.State = 'Boarded' AND :NEW.State <> 'Boarded' THEN
+        RAISE_APPLICATION_ERROR(-20001,'Transition interdite : une reservation deja boarded ne peut pas changer.');
+    END IF;
+
+    -- Empêcher Pending -> Boarded directement (doit passer par Confirmed)
+    IF :OLD.State = 'Pending' AND :NEW.State = 'Boarded' THEN
+        RAISE_APPLICATION_ERROR(-20001,'Transition interdite : Pending -> Boarded (doit etre Confirmed).');
+    END IF;
+
+    -- Empêcher Cancelled après Boarded
+    IF :OLD.State = 'Boarded' AND :NEW.State = 'Canceled' THEN
+        RAISE_APPLICATION_ERROR(-20001,'Transition interdite : Boarded -> Canceled.');
+    END IF;
+
+END;
+/
+
+
+
+
+
+
+
