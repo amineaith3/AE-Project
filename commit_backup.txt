@@ -1,0 +1,5 @@
+8389ac0 Complete project reorganization: Removed duplicate folders from root
+4febc3b Complete project reorganization: Removed duplicate folders from root
+a0f89fc Reorganized project structure: created plsql/ folder and moved all SQL directories into it
+7cc484f Add files via upload
+e25a192 Delete Aeoropor fastapi/app directory
