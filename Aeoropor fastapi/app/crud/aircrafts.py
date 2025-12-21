@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from fastapi import HTTPException
 from app.schemas import AircraftCreate, AircraftUpdate
+import oracledb
+
 
 def create_aircraft(db: Session, aircraft: AircraftCreate):
     """
@@ -71,6 +73,40 @@ def get_aircraft(db: Session, avion_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def get_aircrafts(db: Session):
+    try:
+        # Get the raw Oracle connection from SQLAlchemy
+        raw_connection = db.connection().connection
+        
+        oracle_cursor = raw_connection.cursor()
+        
+        ref_cursor_var = oracle_cursor.var(oracledb.CURSOR)
+        
+        oracle_cursor.callproc("get_aircrafts_infos", [ref_cursor_var])
+        
+        result_cursor = ref_cursor_var.getvalue()
+        
+        rows = result_cursor.fetchall()
+        
+        if not rows:
+            raise HTTPException(status_code=404, detail="No aircrafts found")
+        
+        columns = [desc[0] for desc in result_cursor.description]
+        
+        aircrafts = [dict(zip(columns, row)) for row in rows]
+        
+        result_cursor.close()
+        oracle_cursor.close()
+        
+        return aircrafts
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+    
 def update_aircraft(db: Session, avion_id: int, aircraft: AircraftUpdate):
     """
     Calls the 'update_aircraft' procedure to modify an existing aircraft.

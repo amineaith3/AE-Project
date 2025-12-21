@@ -4,7 +4,7 @@ from .database import Base
 
 
 class Passengers(Base) : 
-       __tablename__ = "PASSENGERS"
+    __tablename__ = "PASSENGERS"
        
     Passenger_id = Column(Integer, primary_key=True, index=True)
     prenom = Column(String(50), nullable=False)

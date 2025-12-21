@@ -31,6 +31,14 @@ def read_aircraft(
     """
     return crud.get_aircraft(db, avion_id)
 
+@router.get("/", response_model=AircraftResponse)
+def read_all_aircrafts(
+    db: Session = Depends(get_db)
+):
+    return crud.get_aircrafts(db)
+
+
+
 @router.put("/{avion_id}", response_model=AircraftResponse)
 def update_existing_aircraft(
     avion_id: int,

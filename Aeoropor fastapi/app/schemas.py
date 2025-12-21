@@ -18,6 +18,9 @@ class PassengerBase(BaseModel):
 class PassengerCreate(PassengerBase):
     pass
 
+class PassengerUpdate(PassengerBase):
+    pass 
+
 
 class PassengerResponse(PassengerBase):
     passenger_id: int
@@ -67,6 +70,8 @@ class FlightBase(BaseModel):
 class FlightCreate(FlightBase):
     pass
 
+class FlightUpdate(FlightBase):
+    pass
 
 class FlightResponse(FlightBase):
     VolNum: int
