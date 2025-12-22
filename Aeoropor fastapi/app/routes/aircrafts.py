@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas import AircraftCreate, AircraftUpdate, AircraftResponse
 from app.crud import aircrafts as crud  # Import the CRUD module we just made
+from typing import List
+
 
 # Create an APIRouter instance[citation:8]
 router = APIRouter(
@@ -31,7 +33,7 @@ def read_aircraft(
     """
     return crud.get_aircraft(db, avion_id)
 
-@router.get("/", response_model=AircraftResponse)
+@router.get("/", response_model=List[AircraftResponse])
 def read_all_aircrafts(
     db: Session = Depends(get_db)
 ):

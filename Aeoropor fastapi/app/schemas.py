@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 
@@ -35,24 +35,26 @@ class PassengerResponse(PassengerBase):
 # ============================
 
 class AircraftBase(BaseModel):
-    AvionID:int
-    Modele: str
-    MaxCapacity: int
-    State: Optional[str] = None
-
+    AvionID: int = Field(..., alias="AVION_ID")
+    Modele: str = Field(..., alias="MODELE")
+    MaxCapacity: int = Field(..., alias="MAXCAPACITY")
+    State: Optional[str] = Field(None, alias="STATE")
+    
+    class Config:
+        from_attributes = True
+        populate_by_name = True
 
 class AircraftCreate(AircraftBase):
     pass
 
-class AircraftUpdate(AircraftBase):
-    pass
+class AircraftUpdate(BaseModel):
+    MODELE: Optional[str] = None
+    MAXCAPACITY: Optional[int] = None
+    STATE: Optional[str] = None
 
 class AircraftResponse(AircraftBase):
-
     class Config:
-        orm_mode = True
-
-
+        from_attributes = True  
 
 # ============================
 #   FLIGHTS
