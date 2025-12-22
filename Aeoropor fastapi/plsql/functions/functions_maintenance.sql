@@ -5,11 +5,10 @@ IS
 BEGIN
     SELECT COUNT(*) INTO v_total
     FROM MAINTENANCE
-    WHERE AvionID = p_avion_id;
+    WHERE Avion_id = p_avion_id; 
     RETURN v_total;
 END;
 /
-
 CREATE OR REPLACE FUNCTION is_aircraft_in_maintenance(p_avion_id IN NUMBER, p_date IN DATE)
 RETURN NUMBER
 IS
@@ -17,7 +16,7 @@ IS
 BEGIN
     SELECT COUNT(*) INTO v_count
     FROM MAINTENANCE
-    WHERE AvionID = p_avion_id
+    WHERE Avion_id = p_avion_id -- Corrigé: Avion_id
       AND TRUNC(OperationDate) = TRUNC(p_date);
     RETURN v_count;
 END;
@@ -30,7 +29,10 @@ IS
 BEGIN
     SELECT State INTO v_state
     FROM MAINTENANCE
-    WHERE MaintenanceID = p_maintenance_id;
+    WHERE maintenance_id = p_maintenance_id; -- Corrigé: maintenance_id
     RETURN v_state;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN 'Maintenance introuvable';
 END;
 /
