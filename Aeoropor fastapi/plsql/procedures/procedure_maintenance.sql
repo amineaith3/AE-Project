@@ -73,4 +73,3 @@ BEGIN
     SELECT * FROM MAINTENANCE WHERE maintenance_id = p_maintenance_id;
 END;
 /
-/
