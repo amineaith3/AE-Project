@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
-# On importe les différents schémas pour les utiliser aux bons endroits
 from app.schemas import ReservationCreate, ReservationResponse 
 from app.crud import reservations as crud_res
 
