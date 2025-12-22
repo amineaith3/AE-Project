@@ -3,29 +3,26 @@ CREATE OR REPLACE PROCEDURE create_maintenance_proc(
     p_operation_date IN DATE,
     p_typee IN VARCHAR2,
     p_result OUT VARCHAR2
-)
-AS
+) AS
     v_existing NUMBER;
 BEGIN
+    
     SELECT COUNT(*) INTO v_existing
     FROM MAINTENANCE
-    WHERE AvionID = p_avion_id
-      AND OperationDate = p_operation_date;
+    WHERE Avion_id = p_avion_id
+      AND TRUNC(OperationDate) = TRUNC(p_operation_date);
 
     IF v_existing > 0 THEN
         p_result := 'Maintenance déjà programmée pour cet avion à cette date.';
         RETURN;
     END IF;
 
-    INSERT INTO MAINTENANCE (AvionID, OperationDate, Typee, State)
-    VALUES (p_avion_id, p_operation_date, p_typee, 'Scheduled');
+   
+    INSERT INTO MAINTENANCE (maintenance_id, Avion_id, OperationDate, typee, State)
+    VALUES (seq_maint.NEXTVAL, p_avion_id, p_operation_date, p_typee, 'Scheduled');
 
-    IF TRUNC(p_operation_date) = TRUNC(SYSDATE) THEN
-        UPDATE AIRCRAFTS
-        SET State = 'Maintenance'
-        WHERE AvionID = p_avion_id;
-    END IF;
-
+ 
+    
     COMMIT;
     p_result := 'Maintenance créée avec succès.';
 EXCEPTION
@@ -35,39 +32,45 @@ EXCEPTION
 END create_maintenance_proc;
 /
 
+
 CREATE OR REPLACE PROCEDURE delete_maintenance_proc(
     p_maintenance_id IN NUMBER,
     p_result OUT VARCHAR2
-)
-AS
-    v_avion NUMBER;
+) AS
 BEGIN
-    SELECT AvionID INTO v_avion
-    FROM MAINTENANCE
-    WHERE MaintenanceID = p_maintenance_id;
-
+ 
     DELETE FROM MAINTENANCE
-    WHERE MaintenanceID = p_maintenance_id;
+    WHERE maintenance_id = p_maintenance_id;
 
-    DECLARE
-        v_count NUMBER;
-    BEGIN
-        SELECT COUNT(*) INTO v_count
-        FROM MAINTENANCE
-        WHERE AvionID = v_avion AND State != 'Completed';
-
-        IF v_count = 0 THEN
-            UPDATE AIRCRAFTS SET State = 'Ready' WHERE AvionID = v_avion;
-        END IF;
-    END;
-
-    COMMIT;
-    p_result := 'Maintenance supprimée et état avion mis à jour.';
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
+    IF SQL%ROWCOUNT = 0 THEN
         p_result := 'Maintenance non trouvée.';
+    ELSE
+       
+        COMMIT;
+        p_result := 'Maintenance supprimée avec succès.';
+    END IF;
+EXCEPTION
     WHEN OTHERS THEN
         ROLLBACK;
         p_result := 'Erreur : ' || SQLERRM;
 END delete_maintenance_proc;
+/
+
+
+CREATE OR REPLACE PROCEDURE list_maintenance_proc(p_cursor OUT SYS_REFCURSOR) AS
+BEGIN
+    OPEN p_cursor FOR SELECT * FROM MAINTENANCE;
+END;
+/
+
+
+CREATE OR REPLACE PROCEDURE get_maintenance_proc(
+    p_maintenance_id IN NUMBER, 
+    p_cursor OUT SYS_REFCURSOR
+) AS
+BEGIN
+    OPEN p_cursor FOR 
+    SELECT * FROM MAINTENANCE WHERE maintenance_id = p_maintenance_id;
+END;
+/
 /
