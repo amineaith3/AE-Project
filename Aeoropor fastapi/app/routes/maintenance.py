@@ -1,42 +1,42 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas import MaintenanceCreate
+from app.schemas import MaintenanceCreate, MaintenanceResponse
 from app.crud import maintenance as crud_maint
+from typing import List
 
 router = APIRouter(prefix="/maintenance", tags=["Maintenance"])
 
-@router.post("/")
+
+@router.post("/", response_model=dict)
 def create_maint(maint: MaintenanceCreate, db: Session = Depends(get_db)):
-    message = crud_maint.create_maintenance(db, maint.AvionID, maint.OperationDate, maint.Type)
+    # On passe l'objet 'maint' complet au CRUD comme dans aircrafts
+    message = crud_maint.create_maintenance(db, maint)
     return {"message": message}
+
+
+@router.get("/", response_model=List[MaintenanceResponse])
+def list_maintenances(db: Session = Depends(get_db)):
+    maintenances = crud_maint.list_maintenance(db)
+    if not maintenances:
+        return []
+    return maintenances
+
 
 @router.delete("/{maintenance_id}")
 def delete_maint(maintenance_id: int, db: Session = Depends(get_db)):
     message = crud_maint.delete_maintenance(db, maintenance_id)
     return {"message": message}
 
-@router.get("/{maintenance_id}")
-def get_maint(maintenance_id: int, db: Session = Depends(get_db)):
-    maint_list = crud_maint.get_maintenance(db, maintenance_id)
-    return {"maintenance": maint_list}
 
-@router.get("/")
-def list_maint(db: Session = Depends(get_db)):
-    maint_list = crud_maint.list_maintenance(db)
-    return {"maintenances": maint_list}
 
 @router.get("/total/{avion_id}")
-def total_maintenance(avion_id: int, db: Session = Depends(get_db)):
+def get_total(avion_id: int, db: Session = Depends(get_db)):
     total = crud_maint.get_total_maintenance(db, avion_id)
-    return {"total_maintenance": total}
+    return {"avion_id": avion_id, "total_maintenances": total}
 
-@router.get("/in_maintenance/{avion_id}/{date}")
-def aircraft_in_maintenance(avion_id: int, date: str, db: Session = Depends(get_db)):
-    in_maint = crud_maint.is_aircraft_in_maintenance(db, avion_id, date)
-    return {"in_maintenance": bool(in_maint)}
-
-@router.get("/state/{maintenance_id}")
-def maintenance_state(maintenance_id: int, db: Session = Depends(get_db)):
-    state = crud_maint.get_maintenance_state(db, maintenance_id)
-    return {"state": state}
+@router.get("/check-availability/{avion_id}/{date}")
+def check_maint(avion_id: int, date: str, db: Session = Depends(get_db)):
+    
+    is_busy = crud_maint.is_aircraft_in_maintenance(db, avion_id, date)
+    return {"avion_id": avion_id, "is_in_maintenance": bool(is_busy)}
