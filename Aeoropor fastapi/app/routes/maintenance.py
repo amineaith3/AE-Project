@@ -7,26 +7,23 @@ from typing import List
 
 router = APIRouter(prefix="/maintenance", tags=["Maintenance"])
 
-
-@router.post("/", response_model=dict)
+@router.post("/", response_model=MaintenanceResponse, status_code=201)
 def create_maint(maint: MaintenanceCreate, db: Session = Depends(get_db)):
-    # On passe l'objet 'maint' complet au CRUD comme dans aircrafts
-    message = crud_maint.create_maintenance(db, maint)
-    return {"message": message}
-
+    
+    return crud_maint.create_maintenance(db, maint)
 
 @router.get("/", response_model=List[MaintenanceResponse])
 def list_maintenances(db: Session = Depends(get_db)):
+    
     maintenances = crud_maint.list_maintenance(db)
-    if not maintenances:
-        return []
-    return maintenances
 
+    return maintenances
 
 @router.delete("/{maintenance_id}")
 def delete_maint(maintenance_id: int, db: Session = Depends(get_db)):
-    message = crud_maint.delete_maintenance(db, maintenance_id)
-    return {"message": message}
+    
+    crud_maint.delete_maintenance(db, maintenance_id)
+    return {"message": f"Maintenance {maintenance_id} deleted successfully"}
 
 
 
@@ -37,6 +34,5 @@ def get_total(avion_id: int, db: Session = Depends(get_db)):
 
 @router.get("/check-availability/{avion_id}/{date}")
 def check_maint(avion_id: int, date: str, db: Session = Depends(get_db)):
-    
     is_busy = crud_maint.is_aircraft_in_maintenance(db, avion_id, date)
     return {"avion_id": avion_id, "is_in_maintenance": bool(is_busy)}
