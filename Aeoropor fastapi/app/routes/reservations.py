@@ -1,48 +1,47 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from typing import List
 from app.database import get_db
-from app.schemas import ReservationCreate, ReservationResponse
+# On importe les différents schémas pour les utiliser aux bons endroits
+from app.schemas import ReservationCreate, ReservationResponse 
 from app.crud import reservations as crud_res
 
-router = APIRouter(
-    prefix="/reservations",
-    tags=["Reservations"]
-)
+router = APIRouter(prefix="/reservations", tags=["Reservations"])
 
 
-@router.post("/", response_model=ReservationResponse)
-def create(res: ReservationCreate, db: Session = Depends(get_db)):
-    return crud_res.create_reservation(db, res)
+
+@router.post("/", response_model=dict)
+def create_res(res: ReservationCreate, db: Session = Depends(get_db)):
+    message = crud_res.create_reservation(db, res)
+    return {"message": message}
+
+
+
+@router.get("/", response_model=List[ReservationResponse])
+def list_all_reservations(db: Session = Depends(get_db)):
+    # Le CRUD renvoie une liste de dictionnaires grâce au Ref Cursor
+    res_list = crud_res.list_reservations(db)
+    return res_list # FastAPI transforme les dicts en objets ReservationResponse
 
 
 @router.get("/{res_id}", response_model=ReservationResponse)
-def read(res_id: int, db: Session = Depends(get_db)):
-    res = crud_res.get_reservation(db, res_id)
-    if not res:
-        raise HTTPException(
-            status_code=404,
-            detail="Réservation non trouvée."
-        )
-    return res
+def get_single_reservation(res_id: int, db: Session = Depends(get_db)):
+    reservation = crud_res.get_reservation(db, res_id)
+    return reservation
 
 
-@router.get("/", response_model=list[ReservationResponse])
-def read_all(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db)
-):
-    return crud_res.get_all_reservations(db, skip, limit)
+@router.delete("/{res_id}")
+def delete_res(res_id: int, db: Session = Depends(get_db)):
+    message = crud_res.delete_reservation(db, res_id)
+    return {"message": message}
 
 
-@router.delete("/{res_id}", response_model=dict)
-def delete(res_id: int, db: Session = Depends(get_db)):
-    res = crud_res.delete_reservation(db, res_id)
-    if not res:
-        raise HTTPException(
-            status_code=404,
-            detail="Réservation non trouvée."
-        )
-    return {
-        "message": "Réservation annulée et capacité du vol mise à jour."
-    }
+@router.get("/stats/total/{volnum}")
+def total_reservations(volnum: int, db: Session = Depends(get_db)):
+    total = crud_res.get_total_reservations(db, volnum)
+    return {"vol_num": volnum, "total": total}
+
+@router.get("/status/seat-taken/{volnum}/{seatcode}")
+def check_seat(volnum: int, seatcode: str, db: Session = Depends(get_db)):
+    taken = crud_res.is_seat_taken(db, volnum, seatcode)
+    return {"is_taken": bool(taken)}
