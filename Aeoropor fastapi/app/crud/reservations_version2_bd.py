@@ -1,49 +1,44 @@
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from typing import List
+from app.database import get_db
+from app.schemas import ReservationCreate, ReservationResponse
+from app.crud import reservations as crud_res
+
+router = APIRouter(prefix="/reservations", tags=["Reservations"])
 
 
-def create_reservation(db: Session, passenger_id, volnum, seatcode, guardian_id=None):
-    result = db.execute(
-        text("""
-            DECLARE
-                v_result VARCHAR2(500);
-            BEGIN
-                create_reservation_proc(:pid, :vnum, :seat, :gid, v_result);
-                :res := v_result;
-            END;
-        """),
-        {"pid": passenger_id, "vnum": volnum, "seat": seatcode, "gid": guardian_id, "res": ""}
-    ).scalar()
-    return result
-
-def delete_reservation(db: Session, res_id):
-    result = db.execute(
-        text("""
-            DECLARE
-                v_result VARCHAR2(500);
-            BEGIN
-                delete_reservation_proc(:rid, v_result);
-                :res := v_result;
-            END;
-        """),
-        {"rid": res_id, "res": ""}
-    ).scalar()
-    return result
-
-def get_reservation(db: Session, res_id):
-    cursor = db.execute(text("BEGIN get_reservation_proc(:rid, :res); END;"), {"rid": res_id, "res": None})
-    return cursor.fetchall()
-
-def list_reservations(db: Session):
-    cursor = db.execute(text("BEGIN list_reservations_proc(:res); END;"), {"res": None})
-    return cursor.fetchall()
+@router.post("/", response_model=dict)
+def create_reservation(res: ReservationCreate, db: Session = Depends(get_db)):
+    message = crud_res.create_reservation(db, res)
+    return {"message": message}
 
 
-def get_total_reservations(db: Session, volnum):
-    return db.execute(text("SELECT get_total_reservations(:vnum) FROM dual"), {"vnum": volnum}).scalar()
 
-def is_seat_taken(db: Session, volnum, seatcode):
-    return db.execute(text("SELECT is_seat_taken(:vnum, :seat) FROM dual"), {"vnum": volnum, "seat": seatcode}).scalar()
+@router.get("/", response_model=List[ReservationResponse])
+def read_reservations(db: Session = Depends(get_db)):
+    reservations = crud_res.list_reservations(db)
+    return reservations
 
-def get_passenger_age(db: Session, passenger_id):
-    return db.execute(text("SELECT get_passenger_age(:pid) FROM dual"), {"pid": passenger_id}).scalar()
+
+@router.get("/{res_id}", response_model=ReservationResponse)
+def read_reservation(res_id: int, db: Session = Depends(get_db)):
+    reservation = crud_res.get_reservation(db, res_id)
+    return reservation
+
+
+@router.delete("/{res_id}")
+def delete_reservation(res_id: int, db: Session = Depends(get_db)):
+    message = crud_res.delete_reservation(db, res_id)
+    return {"message": message}
+
+
+@router.get("/total-flight/{vol_num}")
+def get_total(vol_num: int, db: Session = Depends(get_db)):
+    total = crud_res.get_total_reservations(db, vol_num)
+    return {"vol_num": vol_num, "total_reservations": total}
+
+@router.get("/check-seat/{vol_num}/{seat_code}")
+def check_seat(vol_num: int, seat_code: str, db: Session = Depends(get_db)):
+    is_free = crud_res.check_seat_availability(db, vol_num, seat_code)
+    return {"vol_num": vol_num, "seat_code": seat_code, "is_available": is_free}
