@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE create_maintenance_proc(
 ) AS
     v_existing NUMBER;
 BEGIN
-    
+
     SELECT COUNT(*) INTO v_existing
     FROM MAINTENANCE
     WHERE Avion_id = p_avion_id
@@ -17,11 +17,10 @@ BEGIN
         RETURN;
     END IF;
 
-   
     INSERT INTO MAINTENANCE (maintenance_id, Avion_id, OperationDate, typee, State)
     VALUES (seq_maint.NEXTVAL, p_avion_id, p_operation_date, p_typee, 'Scheduled');
 
- 
+
     
     COMMIT;
     p_result := 'Maintenance créée avec succès.';
@@ -38,14 +37,14 @@ CREATE OR REPLACE PROCEDURE delete_maintenance_proc(
     p_result OUT VARCHAR2
 ) AS
 BEGIN
- 
+
     DELETE FROM MAINTENANCE
     WHERE maintenance_id = p_maintenance_id;
 
     IF SQL%ROWCOUNT = 0 THEN
         p_result := 'Maintenance non trouvée.';
     ELSE
-       
+     
         COMMIT;
         p_result := 'Maintenance supprimée avec succès.';
     END IF;
