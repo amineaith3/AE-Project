@@ -62,7 +62,7 @@ BEFORE DELETE ON Aircrafts
 FOR EACH ROW
 BEGIN
     
-    IF :OLD.State != 'Out of Service' THEN
+    IF :OLD.State NOT IN ('Out of Service', 'Maintenance') THEN
         RAISE_APPLICATION_ERROR(-20010,
           'Cannot delete an aircraft that is still Active');
     END IF;
@@ -87,10 +87,6 @@ BEGIN
 END;
 /
 
---TABLE 
 
-CREATE TABLE Aircrafts (
-       Avion_id NUMBER PRIMARY KEY,
-       Modele VARCHAR(50) NOT NULL,
-       MaxCapacity NUMBER NOT NULL,
-       State VARCHAR(50) ) ; 
+
+

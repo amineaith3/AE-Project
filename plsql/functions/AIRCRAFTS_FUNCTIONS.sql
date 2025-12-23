@@ -1,20 +1,23 @@
-create or replace FUNCTION aircraft_exists(Avion_id_p IN NUMBER)
-RETURN BOOLEAN
-
+CREATE OR REPLACE FUNCTION aircraft_exists(Avion_id_p IN NUMBER)
+RETURN VARCHAR2
 IS
-    aircraft_exist_v NUMBER;
+    aircraft_exist_v NUMBER;  -- You need to declare this variable!
 BEGIN
-
     SELECT COUNT(*) INTO aircraft_exist_v
     FROM Aircrafts
-    WHERE Avion_id=Avion_id_p;
+    WHERE Avion_id = Avion_id_p;
 
-    IF aircraft_exist_v=0 THEN
-        RETURN FALSE;
+    IF aircraft_exist_v = 0 THEN
+        RETURN 'FALSE';  -- Use single quotes, not double quotes
     ELSE 
-        RETURN TRUE;
+        RETURN 'TRUE';   -- Use single quotes, not double quotes
     END IF;
     
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN 'FALSE';  -- Optional: handle no data found
+    WHEN OTHERS THEN
+        RETURN 'ERROR';  -- Optional: handle other exceptions
 END;
 /
 
@@ -99,26 +102,36 @@ END;
 /
 
 CREATE OR REPLACE FUNCTION get_aircraft_infos(Avion_id_p IN NUMBER)
-RETURN Aircrafts%ROWTYPE
+RETURN SYS_REFCURSOR
 
 IS
-    aircraft_row_v Aircrafts%ROWTYPE;
+    rc SYS_REFCURSOR;
 BEGIN
     
-    BEGIN
-        SELECT * INTO aircraft_row_v
-        FROM Aircrafts 
-        WHERE  Avion_id=Avion_id_p;
+    OPEN rc FOR 
+        SELECT * 
+        FROM Aircrafts
+        WHERE Avion_id=Avion_id_p;
         
-        RETURN aircraft_row_v;
-        
-    EXCEPTION
-        WHEN NO_DATA_FOUND THEN 
-            RETURN NULL;
-    END;
+    RETURN rc;
     
 END;
 /
+
+
+CREATE OR REPLACE FUNCTION get_all_aircrafts_infos
+RETURN SYS_REFCURSOR
+IS
+    rc SYS_REFCURSOR;
+BEGIN 
+    OPEN rc FOR
+    SELECT *
+    FROM Aircrafts;
+    
+    RETURN rc;
+END;
+/
+    
 
 
 CREATE OR REPLACE FUNCTION aircrafts_count_per_modele(Modele_p IN VARCHAR2)

@@ -11,7 +11,7 @@ ALTER TABLE Flights
 ADD COLUMN CurrentCapacity NUMBER NOT NULL;
 
 ALTER TABLE Aircrafts ADD CONSTRAINT chk_aircrafts_state 
-CHECK (State IN ('Ready', 'In Service', 'In Maintenance', 'Out of Service'));
+CHECK (State IN ('Ready', 'Flying', 'Turnaround' ,'Maintenance', 'Out of Service'));
 
 
 ALTER TABLE Flights ADD CONSTRAINT chk_flight_state 

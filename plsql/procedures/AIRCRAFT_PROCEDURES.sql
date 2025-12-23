@@ -2,33 +2,36 @@ CREATE OR REPLACE PROCEDURE add_new_aircraft(
     Avion_id_p IN NUMBER,
     Modele_p IN VARCHAR2,
     MaxCapacity_p IN NUMBER,
-    State_p IN VARCHAR2
+    State_p IN VARCHAR2 DEFAULT 'Ready'  -- Added default
 )
-
 IS 
     aircraft_exist NUMBER;
 BEGIN
+    -- Verify that aircraft doesn't exist already 
+    SELECT COUNT(*) INTO aircraft_exist
+    FROM Aircrafts
+    WHERE Avion_id = Avion_id_p;  -- Assuming column is Avion_id (not AvionID)
 
---verify that aircraft doent exist already 
-
-SELECT COUNT(*) INTO aircraft_exist
-FROM Aircrafts
-WHERE Avion_id=Avion_id_p;
-
-IF aircraft_exist !=0 THEN
-    RAISE_APPLICATION_ERROR(-20001,'aircraft already exist');
+    IF aircraft_exist != 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Aircraft already exists');
+    ELSE 
+        -- CORRECTED: Match exact column names from your table
+        INSERT INTO Aircrafts (Avion_id, Modele, MaxCapacity, State)
+        VALUES (
+            Avion_id_p,
+            Modele_p,
+            MaxCapacity_p,
+            State_p
+        );
+        COMMIT;  -- Added COMMIT
+    END IF;
     
-ELSE 
-    INSERT INTO Aircrafts  (Avion_id, Modele, MaxCapacit, State)
-    VALUES (
-        Avion_id_p,
-        Modele_p,
-        MaxCapacity_p,
-        State_p
-    );
-END IF;
-
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
 END;
+/
 
 
 CREATE OR REPLACE PROCEDURE update_aircraft(
@@ -54,6 +57,7 @@ BEGIN
             State         = COALESCE(State_p, State)
         WHERE Avion_id=Avion_id_p;
     END IF;
+    COMMIT;
 END;
 /
 
@@ -74,6 +78,7 @@ BEGIN
         DELETE FROM Aircrafts
         WHERE Avion_id = Avion_id_p;
     END IF;
+    COMMIT;
 END;
 /
 
@@ -100,6 +105,7 @@ BEGIN
         FROM Aircrafts
         WHERE Avion_id = Avion_id_p;
     END IF;
+    
 END;
 /
 
