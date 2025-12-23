@@ -37,6 +37,9 @@ BEGIN
                 :NEW.Avion_id,
                 SYSDATE
                 );
+                
+        
+                
     ELSIF UPDATING THEN
         INSERT INTO aircraft_audit(action, aircraft_id, action_date)
         VALUES (
@@ -52,6 +55,42 @@ BEGIN
                 :OLD.Avion_id,
                 SYSDATE
                 );
+    END IF;
+END;
+/
+
+
+CREATE OR REPLACE TRIGGER trg_aircraft_logs
+AFTER INSERT OR DELETE OR UPDATE ON Aircrafts
+FOR EACH ROW
+DECLARE
+    v_details CLOB;
+    v_action VARCHAR2(20);
+BEGIN
+    IF INSERTING THEN
+        INSERT INTO LOGS (TableName, Action, RecordID, UserName, Details)
+        VALUES ('Aircrafts', 'INSERT', :NEW.Avion_id, USER,
+                'Modele=' || :NEW.Modele || ', Capacity=' || :NEW.MaxCapacity || ', State=' || :NEW.State);
+                
+    ELSIF UPDATING THEN
+        v_details := NULL;
+        IF :OLD.Modele != :NEW.Modele THEN
+            v_details := NVL(v_details || ', ', '') || 'Modele:' || :OLD.Modele || '→' || :NEW.Modele;
+        END IF;
+        IF :OLD.MaxCapacity != :NEW.MaxCapacity THEN
+            v_details := NVL(v_details || ', ', '') || 'Capacity:' || :OLD.MaxCapacity || '→' || :NEW.MaxCapacity;
+        END IF;
+        IF :OLD.State != :NEW.State THEN
+            v_details := NVL(v_details || ', ', '') || 'State:' || :OLD.State || '→' || :NEW.State;
+        END IF;
+        
+        INSERT INTO LOGS (TableName, Action, RecordID, UserName, Details)
+        VALUES ('Aircrafts', 'UPDATE', :NEW.Avion_id, USER, NVL(v_details, 'No changes detected'));
+        
+    ELSIF DELETING THEN 
+        INSERT INTO LOGS (TableName, Action, RecordID, UserName, Details)
+        VALUES ('Aircrafts', 'DELETE', :OLD.Avion_id, USER,
+                'Modele=' || :OLD.Modele || ', Capacity=' || :OLD.MaxCapacity || ', State=' || :OLD.State);
     END IF;
 END;
 /
