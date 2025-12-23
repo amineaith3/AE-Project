@@ -1,50 +1,76 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from fastapi import HTTPException
+from app.schemas import MaintenanceCreate
+import oracledb
+from datetime import datetime
 
+def create_maintenance(db: Session, maint: MaintenanceCreate):
+    try:
 
-def create_maintenance(db: Session, avion_id, operation_date, typee):
-    result = db.execute(
-        text("""
-            DECLARE
-                v_result VARCHAR2(500);
-            BEGIN
-                create_maintenance_proc(:aid, :odate, :typee, v_result);
-                :res := v_result;
-            END;
-        """),
-        {"aid": avion_id, "odate": operation_date, "typee": typee, "res": ""}
-    ).scalar()
-    return result
+        formatted_date = datetime.strptime(maint.OperationDate, "%Y-%m-%d").date()
+        
+    
+        db.execute(
+            text("BEGIN create_maintenance_proc(:aid, :odate, :typ); END;"),
+            {
+                "aid": maint.AvionID,
+                "odate": formatted_date,
+                "typ": maint.typee # Attention au nom dans ton schéma (typee ou Type)
+            }
+        )
+        db.commit()
 
-def delete_maintenance(db: Session, maintenance_id):
-    result = db.execute(
-        text("""
-            DECLARE
-                v_result VARCHAR2(500);
-            BEGIN
-                delete_maintenance_proc(:mid, v_result);
-                :res := v_result;
-            END;
-        """),
-        {"mid": maintenance_id, "res": ""}
-    ).scalar()
-    return result
+        return db.execute(
+            text("SELECT * FROM MAINTENANCE WHERE Avion_id = :aid ORDER BY maintenance_id DESC"),
+            {"aid": maint.AvionID}
+        ).first()
 
-def get_maintenance(db: Session, maintenance_id):
-    cursor = db.execute(text("BEGIN get_maintenance_proc(:mid, :res); END;"), {"mid": maintenance_id, "res": None})
-    return cursor.fetchall()
+    except Exception as e:
+        db.rollback()
+        error_msg = str(e)
+
+        if "ORA-20101" in error_msg:
+            raise HTTPException(status_code=400, detail="Maintenance déjà programmée à cette date.")
+        elif "ORA-20102" in error_msg:
+            raise HTTPException(status_code=404, detail="Avion introuvable.")
+        elif "ORA-20002" in error_msg:
+            raise HTTPException(status_code=400, detail="L'avion est Hors Service.")
+        else:
+            raise HTTPException(status_code=500, detail=f"Erreur DB: {error_msg}")
 
 def list_maintenance(db: Session):
-    cursor = db.execute(text("BEGIN list_maintenance_proc(:res); END;"), {"res": None})
-    return cursor.fetchall()
+    
+    raw_connection = db.connection().connection
+    cursor = raw_connection.cursor()
+    ref_cursor = cursor.var(oracledb.CURSOR)
+    
+    cursor.callproc("list_maintenance_proc", [ref_cursor])
+    result_cursor = ref_cursor.getvalue()
+    rows = result_cursor.fetchall()
+    
+
+    columns = [desc[0] for desc in result_cursor.description]
+    maintenances = [dict(zip(columns, row)) for row in rows]
+    
+    result_cursor.close()
+    cursor.close()
+    return maintenances
+
+def delete_maintenance(db: Session, maintenance_id: int):
+    try:
+        db.execute(
+            text("BEGIN delete_maintenance_proc(:mid); END;"),
+            {"mid": maintenance_id}
+        )
+        db.commit()
+        return {"message": "Maintenance supprimée"}
+    except Exception as e:
+        db.rollback()
+        if "ORA-20103" in str(e):
+            raise HTTPException(status_code=404, detail="Maintenance non trouvée.")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
-
-def get_total_maintenance(db: Session, avion_id):
+def get_stats_total(db: Session, avion_id: int):
     return db.execute(text("SELECT get_total_maintenance(:aid) FROM dual"), {"aid": avion_id}).scalar()
-
-def is_aircraft_in_maintenance(db: Session, avion_id, date):
-    return db.execute(text("SELECT is_aircraft_in_maintenance(:aid, :date) FROM dual"), {"aid": avion_id, "date": date}).scalar()
-
-def get_maintenance_state(db: Session, maintenance_id):
-    return db.execute(text("SELECT get_maintenance_state(:mid) FROM dual"), {"mid": maintenance_id}).scalar()
