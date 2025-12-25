@@ -1,0 +1,48 @@
+
+--Validation de l'age et de d'email@
+
+CREATE OR REPLACE TRIGGER trg_passenger_validation
+BEFORE INSERT OR UPDATE ON Passengers
+FOR EACH ROW
+BEGIN
+    -- Vérification de l'âge
+    IF :NEW.Age_pass IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20001,'Age du passager obligatoire.');
+    END IF;
+
+    IF :NEW.Age_pass < 0 OR :NEW.Age_pass > 120 THEN
+        RAISE_APPLICATION_ERROR(-20001,'Age du passager invalide.');
+    END IF;
+
+    -- Vérification de l'email
+    IF INSTR(:NEW.Contact, '@') = 0 THEN
+        RAISE_APPLICATION_ERROR(-20001,'Email invalide.');
+    END IF;
+
+END;
+/
+
+--interdire de supprimer un passenger ou gardien avec des reservations deja faite 
+
+CREATE OR REPLACE TRIGGER trg_block_delete_passenger
+BEFORE DELETE ON Passengers
+FOR EACH ROW
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count
+    FROM Reservations
+    WHERE Passenger_id = :OLD.Passenger_id
+       OR Guardian_id  = :OLD.Passenger_id;
+
+    IF v_count > 0 THEN
+        RAISE_APPLICATION_ERROR(-20001,
+        'Suppression interdite : ce passager a des reservations.');
+    END IF;
+END;
+/
+
+
+
+
+
