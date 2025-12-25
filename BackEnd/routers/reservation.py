@@ -2,9 +2,9 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.engine import Connection
 from crud import reservation as crud_reservation
 from models.reservation import ReservationCreate, ReservationUpdate, ReservationOut
-from deps import get_db
+from BackEnd.deps import get_db
 import cx_Oracle
-from oracle_errors import handle_oracle_error
+from BackEnd.oracle_errors import handle_oracle_error
 router = APIRouter(prefix="/reservations", tags=["Reservations"])
 
 @router.post("/", response_model=dict)

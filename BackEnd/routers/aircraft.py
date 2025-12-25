@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.engine import Connection
 from crud import aircraft as crud_aircraft
 from models.aircraft import AircraftCreate, AircraftUpdate, AircraftOut
-from deps import get_db
-from oracle_errors import handle_oracle_error
+from BackEnd.deps import get_db
+from BackEnd.oracle_errors import handle_oracle_error
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy import text
 import cx_Oracle

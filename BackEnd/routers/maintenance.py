@@ -2,9 +2,9 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.engine import Connection
 from crud import maintenance as crud_maintenance
 from models.maintenance import MaintenanceCreate, MaintenanceUpdate, MaintenanceOut
-from deps import get_db
+from BackEnd.deps import get_db
 import cx_Oracle
-from oracle_errors import handle_oracle_error
+from BackEnd.oracle_errors import handle_oracle_error
 router = APIRouter(prefix="/maintenance", tags=["Maintenance"])
 
 @router.post("/", response_model=dict)
