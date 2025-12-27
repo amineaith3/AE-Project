@@ -13,6 +13,7 @@ class ReservationUpdate(BaseModel):
     vol_num: int
     seatcode: str
     state: str
+    
 class ReservationOut(BaseModel):
     reservation_id: int
     passenger_id: int

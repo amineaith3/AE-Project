@@ -5,7 +5,7 @@ BEGIN
     IF :NEW.OperationDate = TRUNC(SYSDATE) THEN
         UPDATE AIRCRAFTS
         SET State = 'Maintenance'
-        WHERE AvionID = :NEW.AvionID;
+        WHERE Avion_id = :NEW.Avion_iD;
     END IF;
 END;
 /

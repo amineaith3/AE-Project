@@ -6,7 +6,7 @@ BEGIN
     WHERE EXISTS (
         SELECT 1 FROM FLIGHTS f
         WHERE f.AvionID = a.AvionID
-          AND SYSDATE BETWEEN f.DepartureTime AND f.Arrival_Time
+          AND SYSDATE BETWEEN f.departure_time AND f.arrival_time
     );
 
     -- Aircrafts maintenance → In Progress
@@ -14,15 +14,15 @@ BEGIN
     SET State = 'Maintenance'
     WHERE EXISTS (
         SELECT 1 FROM MAINTENANCE m
-        WHERE m.AvionID = a.AvionID
+        WHERE m.AvionID = a.Avion_id
           AND m.OperationDate = TRUNC(SYSDATE)
     );
 
     -- Flights → In Service
     UPDATE FLIGHTS
     SET State = 'In Service'
-    WHERE DepartureTime <= SYSDATE
-      AND Arrival_Time >= SYSDATE
+    WHERE departure_time <= SYSDATE
+      AND arrival_time >= SYSDATE
       AND State = 'Scheduled';
 
     -- Maintenance → Completed

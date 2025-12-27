@@ -6,7 +6,7 @@ DROP TABLE Reservations CASCADE CONSTRAINTS;
 DROP TABLE Flights CASCADE CONSTRAINTS;
 DROP TABLE Aircrafts CASCADE CONSTRAINTS;
 DROP TABLE Passengers CASCADE CONSTRAINTS;
-
+DROP TABLE LOGS;
 -- =========================
 -- CREATE TABLES
 -- =========================

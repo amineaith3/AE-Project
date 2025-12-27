@@ -5,14 +5,14 @@ DECLARE
     v_count NUMBER;
 BEGIN
     -- 1. Date dans le futur
-    IF :NEW.DepartureTime <= SYSDATE THEN
+    IF :NEW.Departure_time <= SYSDATE THEN
         RAISE_APPLICATION_ERROR(-20006, 'Le vol doit être programmé dans le futur.');
     END IF;
 
     -- 2. Avion pas en maintenance
     SELECT COUNT(*) INTO v_count
     FROM AIRCRAFTS
-    WHERE AvionID = :NEW.AvionID
+    WHERE Avion_iD = :NEW.Avion_iD
       AND State = 'Maintenance';
     IF v_count > 0 THEN
         RAISE_APPLICATION_ERROR(-20007, 'Avion en maintenance, impossible d’affecter ce vol.');
@@ -21,9 +21,9 @@ BEGIN
     -- 3. Vérifier conflit avec autres vols du même avion
     SELECT COUNT(*) INTO v_count
     FROM FLIGHTS
-    WHERE AvionID = :NEW.AvionID
-      AND ((:NEW.DepartureTime BETWEEN DepartureTime AND ArrivalTime)
-           OR (:NEW.Arrival_Time BETWEEN DepartureTime AND ArrivalTime));
+    WHERE Avion_iD = :NEW.Avion_iD
+      AND ((:NEW.Departure_time BETWEEN Departure_time AND Arrival_Time)
+           OR (:NEW.Arrival_Time BETWEEN Departure_time AND Arrival_Time));
     IF v_count > 0 THEN
         RAISE_APPLICATION_ERROR(-20008, 'L’avion est déjà affecté à un autre vol à cette période.');
     END IF;

@@ -59,7 +59,7 @@ IS
   v_count NUMBER;
 BEGIN
   SELECT COUNT(*) INTO v_count
-  FROM reservation
+  FROM reservations
   WHERE vol_num = p_vol_num
     AND state = 'CONFIRMÉ';
 
@@ -73,6 +73,7 @@ BEGIN
   DBMS_OUTPUT.PUT_LINE('Vol supprimé');
 END;
 /
+
 CREATE OR REPLACE PROCEDURE CHANGE_FLIGHT_STATE(
   p_vol_num   IN NUMBER,
   p_new_state IN VARCHAR2

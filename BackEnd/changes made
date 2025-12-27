@@ -1,0 +1,5 @@
+port changed from 1522 to 1521
+changed cx_oracle to oracledb in the URL to db 
+
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4

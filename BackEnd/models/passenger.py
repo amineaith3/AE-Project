@@ -16,6 +16,7 @@ class PassengerUpdate(BaseModel):
     contact: EmailStr
     nationality: str
     age: int
+
 class PassengerOut(BaseModel):
     passenger_id: int
     prenom: str

@@ -3,8 +3,10 @@ from sqlalchemy.engine import Connection
 from crud import reservation as crud_reservation
 from models.reservation import ReservationCreate, ReservationUpdate, ReservationOut
 from deps import get_db
-import cx_Oracle
+import oracledb as cx_Oracle
 from oracle_errors import handle_oracle_error
+from typing import List
+
 router = APIRouter(prefix="/reservations", tags=["Reservations"])
 
 @router.post("/", response_model=dict)
@@ -32,12 +34,28 @@ def remove_reservation(reservation_id: int, conn: Connection = Depends(get_db)):
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/passport/{num_passeport}", response_model=dict)
-def read_reservation_by_passport(num_passeport: int, conn: Connection = Depends(get_db)):
+def read_reservation_by_passport(reservation_id: int, conn: Connection = Depends(get_db)):
     try:
-        reservation = crud_reservation.get_reservation_by_passport(conn, num_passeport)
+        reservation = crud_reservation.get_reservation_by_passport(conn, reservation_id)
         if not reservation or reservation["reservation_id"] is None:
             raise HTTPException(status_code=404, detail="Reservation not found")
         return reservation
+    except cx_Oracle.DatabaseError as e:
+        error_obj, = e.args
+        raise HTTPException(
+            status_code=400,
+            detail=f"Oracle Error {error_obj.code}: {error_obj.message}"
+        )
+
+
+
+@router.get("/", response_model=List[dict])
+def read_reservations(conn: Connection = Depends(get_db)):
+    try:
+        reservation = crud_reservation.get_all_reservations(conn)
+
+        return reservation
+    
     except cx_Oracle.DatabaseError as e:
         error_obj, = e.args
         raise HTTPException(

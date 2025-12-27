@@ -1,6 +1,8 @@
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 from models.flight import FlightCreate, FlightUpdate
+from fastapi import HTTPException
+
 
 def add_flight(conn: Connection, flight: FlightCreate):
     """
@@ -92,3 +94,38 @@ def get_flight_by_id(conn: Connection, vol_num: int):
     ).fetchone()
 
     return result
+
+def get_all_flights(conn: Connection, skip: int = 0, limit: int = 100):
+    try:
+        # SQLAlchemy connection - use text() for SQL strings
+        
+        
+        query = text("""
+            SELECT * FROM flights 
+            ORDER BY vol_num 
+            OFFSET :skip ROWS FETCH NEXT :limit ROWS ONLY
+        """)
+        
+        # Execute with parameters
+        result = conn.execute(query, {"skip": skip, "limit": limit})
+        
+        # Fetch all results
+        rows = result.fetchall()
+        
+        if not rows:
+            return []
+        
+        # Convert to list of dictionaries
+        flights = []
+        for row in rows:
+            # Convert row to dictionary
+            flight_dict = dict(row._mapping)  # Use _mapping for SQLAlchemy rows
+            flights.append(flight_dict)
+        
+        return flights
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"FULL ERROR TRACEBACK:\n{error_details}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")

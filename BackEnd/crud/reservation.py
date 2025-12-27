@@ -1,7 +1,8 @@
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 from models.reservation import ReservationCreate, ReservationUpdate
-import cx_Oracle
+import oracledb as cx_Oracle
+from fastapi import HTTPException
 
 def add_reservation(conn: Connection, reservation: ReservationCreate):
     conn.execute(
@@ -78,3 +79,37 @@ def get_reservation_by_passport(conn: Connection, num_passeport: int):
         "state": state.getvalue(),
         "guardian_id": guardian_id.getvalue(),
     }
+
+def get_all_reservations(conn: Connection, skip: int = 0, limit: int = 100):
+    try:
+        from sqlalchemy import text
+        
+        query = text("""
+            SELECT * FROM reservations 
+            ORDER BY reservation_id 
+            OFFSET :skip ROWS FETCH NEXT :limit ROWS ONLY
+        """)
+        
+        # Exécuter la requête
+        result = conn.execute(query, {"skip": skip, "limit": limit})
+        
+        # Récupérer tous les résultats
+        rows = result.fetchall()
+        
+        if not rows:
+            return []  # Liste vide
+        
+        # Convertir chaque ligne en dictionnaire
+        reservations = []
+        for row in rows:
+            # row._mapping convertit la ligne SQLAlchemy en dictionnaire
+            reservation_dict = dict(row._mapping)
+            reservations.append(reservation_dict)
+        
+        return reservations  # Liste de dictionnaires
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"FULL ERROR TRACEBACK:\n{error_details}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")

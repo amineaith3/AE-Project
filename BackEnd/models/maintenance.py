@@ -10,6 +10,7 @@ class MaintenanceUpdate(BaseModel):
     operation_date: date
     typee: str
     state: str
+
 class MaintenanceOut(BaseModel):
     avion_id: int
     operation_date: date

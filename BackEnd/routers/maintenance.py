@@ -3,7 +3,6 @@ from sqlalchemy.engine import Connection
 from crud import maintenance as crud_maintenance
 from models.maintenance import MaintenanceCreate, MaintenanceUpdate, MaintenanceOut
 from deps import get_db
-import cx_Oracle
 from oracle_errors import handle_oracle_error
 router = APIRouter(prefix="/maintenance", tags=["Maintenance"])
 
@@ -14,6 +13,7 @@ def create_maintenance(maintenance: MaintenanceCreate, conn: Connection = Depend
         return {"message": "Maintenance added successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.put("/{maintenance_id}", response_model=dict)
 def modify_maintenance(maintenance_id: int, maintenance: MaintenanceUpdate, conn: Connection = Depends(get_db)):
@@ -31,6 +31,7 @@ def remove_maintenance(maintenance_id: int, conn: Connection = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.get("/", response_model=list)
 def read_all_maintenance(conn: Connection = Depends(get_db)):
     try:
@@ -39,6 +40,8 @@ def read_all_maintenance(conn: Connection = Depends(get_db)):
         return [dict(zip(columns, row)) for row in rows]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.get("/{maintenance_id}", response_model=dict)
 def read_maintenance_by_id(maintenance_id: int, conn: Connection = Depends(get_db)):
     try:

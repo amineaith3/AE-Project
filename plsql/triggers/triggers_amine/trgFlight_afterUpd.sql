@@ -5,7 +5,7 @@ BEGIN
     IF :NEW.State = 'Cancelled' THEN
         UPDATE RESERVATIONS
         SET State = 'Cancelled'
-        WHERE VolNum = :NEW.VolNum;
+        WHERE Vol_num = :NEW.Vol_num;
     END IF;
 END;
 /

@@ -1,7 +1,9 @@
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 from models.maintenance import MaintenanceCreate, MaintenanceUpdate
-import cx_Oracle
+import oracledb as cx_Oracle
+from typing import List
+
 def add_maintenance(conn: Connection, maintenance: MaintenanceCreate):
     conn.execute(
         text("""
@@ -61,13 +63,31 @@ def list_maintenance(conn: Connection):
     columns = [col[0].lower() for col in ref_cursor.description]
     return rows, columns
 
+# crud_maintenance.py
 def get_maintenance_by_id(conn: Connection, maintenance_id: int):
-    raw_conn = conn.connection  # get cx_Oracle connection
-    cursor = raw_conn.cursor()
-    out_cursor = cursor.var(cx_Oracle.CURSOR)
-    cursor.callproc("get_maintenance_by_id", [maintenance_id, out_cursor])
-
-    ref_cursor = out_cursor.getvalue()
-    rows = ref_cursor.fetchall()
-    columns = [col[0].lower() for col in ref_cursor.description]  # get column names
-    return rows, columns
+    """Get maintenance by ID - using direct SQL instead of stored procedure"""
+    try:
+        # Execute query
+        result = conn.execute(
+            text("""
+                SELECT maintenance_id, avion_id, operationdate, typee, state
+                FROM Maintenance 
+                WHERE maintenance_id = :id
+            """),
+            {"id": maintenance_id}
+        )
+        
+        # Fetch the row
+        row = result.fetchone()
+        
+        if row:
+            # Get column names
+            columns = [col.lower() for col in result.keys()]
+            return [row], columns  # Return as list with one row
+        else:
+            return [], []
+            
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error in get_maintenance_by_id: {e}")
+        raise

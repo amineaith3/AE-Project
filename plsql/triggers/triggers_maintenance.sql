@@ -35,9 +35,10 @@ BEGIN
         SET State = 'Ready' 
         WHERE Avion_id = :OLD.Avion_id;
     END IF;
+TRG_MAINT_ID
 
  
-    INSERT INTO LOGS(TableName, Operation, RecordID, Details)
+        INSERT INTO LOGS(TableName, Action, RecordID, Details)
     VALUES ('MAINTENANCE', 'DELETE', :OLD.maintenance_id,
             'Avion_id='||:OLD.Avion_id||', Type='||:OLD.typee);
 END;

@@ -13,11 +13,11 @@ class FlightCreate(FlightBase):
     vol_num: int
 
 class FlightUpdate(BaseModel):
-    destination: Optional[str]
-    departure_time: Optional[datetime]
-    arrival_time: Optional[datetime]
-    avion_id: Optional[int]
-    state: Optional[str]
+    destination: Optional[str] = None  # Add = None
+    departure_time: Optional[datetime] = None
+    arrival_time: Optional[datetime] = None
+    avion_id: Optional[int] = None
+    state: Optional[str] = None
 
 class FlightOut(FlightBase):
     vol_num: int
