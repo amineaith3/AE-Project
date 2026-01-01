@@ -49,4 +49,4 @@ The database forms the backbone of the project, handling all critical business l
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/airport-management.git
+git clone https://github.com/amineaith3/AE-Project.git
